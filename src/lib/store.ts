@@ -1,0 +1,340 @@
+import { neon } from "@neondatabase/serverless";
+import type { Player, Round, ScoreEntry, Season } from "./types";
+
+export interface Store {
+  loadSeason(): Promise<Season>;
+  addPlayer(name: string, startingHandicap: number | null): Promise<void>;
+  updatePlayer(
+    id: string,
+    fields: { name?: string; startingHandicap?: number | null; active?: boolean }
+  ): Promise<void>;
+  createRound(fields: {
+    label: string;
+    course: string;
+    chooserId: string | null;
+    date: string | null;
+  }): Promise<void>;
+  updateRound(
+    id: string,
+    fields: {
+      label?: string;
+      course?: string;
+      chooserId?: string | null;
+      date?: string | null;
+      status?: "upcoming" | "played";
+    }
+  ): Promise<void>;
+  deleteRound(id: string): Promise<void>;
+  saveScores(roundId: string, scores: ScoreEntry[]): Promise<void>;
+}
+
+const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
+  { name: "O. Ballard", cap: 16 },
+  { name: "G. Goddard", cap: 18 },
+  { name: "G. Swainson", cap: 19 },
+  { name: "G. Archer", cap: 25 },
+  { name: "A. Everett", cap: 26 },
+  { name: "A. Turner", cap: 29 },
+  { name: "P. Andrews", cap: null },
+];
+
+const SEED_ROUNDS = [
+  "September",
+  "October",
+  "November",
+  "December",
+  "January",
+  "February",
+  "Finale — Round 1",
+  "Finale — Round 2",
+];
+
+/* ------------------------------- Postgres ------------------------------- */
+
+type Sql = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+) => Promise<Array<Record<string, unknown>>>;
+
+class PostgresStore implements Store {
+  private sql: Sql;
+  private ready: Promise<void> | null = null;
+
+  constructor(url: string) {
+    this.sql = neon(url) as unknown as Sql;
+  }
+
+  private ensure(): Promise<void> {
+    if (!this.ready) this.ready = this.init();
+    return this.ready;
+  }
+
+  private async init(): Promise<void> {
+    const sql = this.sql;
+    await sql`CREATE TABLE IF NOT EXISTS players (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      starting_handicap INTEGER,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS rounds (
+      id TEXT PRIMARY KEY,
+      seq INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      course TEXT NOT NULL DEFAULT '',
+      chooser_id TEXT,
+      round_date DATE,
+      status TEXT NOT NULL DEFAULT 'upcoming'
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS scores (
+      round_id TEXT NOT NULL,
+      player_id TEXT NOT NULL,
+      gross INTEGER,
+      absent BOOLEAN NOT NULL DEFAULT FALSE,
+      override_net INTEGER,
+      PRIMARY KEY (round_id, player_id)
+    )`;
+
+    const existing = await sql`SELECT COUNT(*)::int AS n FROM players`;
+    if ((existing[0] as { n: number }).n === 0) {
+      for (const p of SEED_PLAYERS) {
+        await sql`INSERT INTO players (id, name, starting_handicap)
+                  VALUES (${crypto.randomUUID()}, ${p.name}, ${p.cap})`;
+      }
+      for (let i = 0; i < SEED_ROUNDS.length; i++) {
+        await sql`INSERT INTO rounds (id, seq, label)
+                  VALUES (${crypto.randomUUID()}, ${i + 1}, ${SEED_ROUNDS[i]})`;
+      }
+    }
+  }
+
+  async loadSeason(): Promise<Season> {
+    await this.ensure();
+    const sql = this.sql;
+    const [playerRows, roundRows, scoreRows] = await Promise.all([
+      sql`SELECT id, name, starting_handicap, active FROM players ORDER BY created_at`,
+      sql`SELECT id, seq, label, course, chooser_id, round_date::text AS round_date, status
+          FROM rounds ORDER BY seq`,
+      sql`SELECT round_id, player_id, gross, absent, override_net FROM scores`,
+    ]);
+
+    const players: Player[] = (playerRows as Array<Record<string, unknown>>).map((r) => ({
+      id: r.id as string,
+      name: r.name as string,
+      startingHandicap: r.starting_handicap as number | null,
+      active: r.active as boolean,
+    }));
+
+    const scoresByRound = new Map<string, ScoreEntry[]>();
+    for (const r of scoreRows as Array<Record<string, unknown>>) {
+      const list = scoresByRound.get(r.round_id as string) ?? [];
+      list.push({
+        playerId: r.player_id as string,
+        gross: r.gross as number | null,
+        absent: r.absent as boolean,
+        overrideNet: r.override_net as number | null,
+      });
+      scoresByRound.set(r.round_id as string, list);
+    }
+
+    const rounds: Round[] = (roundRows as Array<Record<string, unknown>>).map((r) => ({
+      id: r.id as string,
+      seq: r.seq as number,
+      label: r.label as string,
+      course: r.course as string,
+      chooserId: r.chooser_id as string | null,
+      date: r.round_date as string | null,
+      status: r.status as Round["status"],
+      scores: scoresByRound.get(r.id as string) ?? [],
+    }));
+
+    return { players, rounds };
+  }
+
+  async addPlayer(name: string, startingHandicap: number | null): Promise<void> {
+    await this.ensure();
+    await this.sql`INSERT INTO players (id, name, starting_handicap)
+                   VALUES (${crypto.randomUUID()}, ${name}, ${startingHandicap})`;
+  }
+
+  async updatePlayer(
+    id: string,
+    fields: { name?: string; startingHandicap?: number | null; active?: boolean }
+  ): Promise<void> {
+    await this.ensure();
+    if (fields.name !== undefined)
+      await this.sql`UPDATE players SET name = ${fields.name} WHERE id = ${id}`;
+    if (fields.startingHandicap !== undefined)
+      await this.sql`UPDATE players SET starting_handicap = ${fields.startingHandicap} WHERE id = ${id}`;
+    if (fields.active !== undefined)
+      await this.sql`UPDATE players SET active = ${fields.active} WHERE id = ${id}`;
+  }
+
+  async createRound(fields: {
+    label: string;
+    course: string;
+    chooserId: string | null;
+    date: string | null;
+  }): Promise<void> {
+    await this.ensure();
+    const max = await this.sql`SELECT COALESCE(MAX(seq), 0)::int AS n FROM rounds`;
+    const seq = (max[0] as { n: number }).n + 1;
+    await this.sql`INSERT INTO rounds (id, seq, label, course, chooser_id, round_date)
+                   VALUES (${crypto.randomUUID()}, ${seq}, ${fields.label}, ${fields.course},
+                           ${fields.chooserId}, ${fields.date})`;
+  }
+
+  async updateRound(
+    id: string,
+    fields: {
+      label?: string;
+      course?: string;
+      chooserId?: string | null;
+      date?: string | null;
+      status?: "upcoming" | "played";
+    }
+  ): Promise<void> {
+    await this.ensure();
+    if (fields.label !== undefined)
+      await this.sql`UPDATE rounds SET label = ${fields.label} WHERE id = ${id}`;
+    if (fields.course !== undefined)
+      await this.sql`UPDATE rounds SET course = ${fields.course} WHERE id = ${id}`;
+    if (fields.chooserId !== undefined)
+      await this.sql`UPDATE rounds SET chooser_id = ${fields.chooserId} WHERE id = ${id}`;
+    if (fields.date !== undefined)
+      await this.sql`UPDATE rounds SET round_date = ${fields.date} WHERE id = ${id}`;
+    if (fields.status !== undefined)
+      await this.sql`UPDATE rounds SET status = ${fields.status} WHERE id = ${id}`;
+  }
+
+  async deleteRound(id: string): Promise<void> {
+    await this.ensure();
+    await this.sql`DELETE FROM scores WHERE round_id = ${id}`;
+    await this.sql`DELETE FROM rounds WHERE id = ${id}`;
+  }
+
+  async saveScores(roundId: string, scores: ScoreEntry[]): Promise<void> {
+    await this.ensure();
+    await this.sql`DELETE FROM scores WHERE round_id = ${roundId}`;
+    for (const s of scores) {
+      await this.sql`INSERT INTO scores (round_id, player_id, gross, absent, override_net)
+                     VALUES (${roundId}, ${s.playerId}, ${s.gross}, ${s.absent}, ${s.overrideNet})`;
+    }
+    await this.sql`UPDATE rounds SET status = 'played' WHERE id = ${roundId}`;
+  }
+}
+
+/* ------------------------------- In-memory ------------------------------ */
+/** Used when DATABASE_URL isn't set: local dev and pre-database previews.
+ *  Data does not persist across server restarts. */
+
+class MemoryStore implements Store {
+  private season: Season;
+
+  constructor() {
+    this.season = {
+      players: SEED_PLAYERS.map((p) => ({
+        id: crypto.randomUUID(),
+        name: p.name,
+        startingHandicap: p.cap,
+        active: true,
+      })),
+      rounds: SEED_ROUNDS.map((label, i) => ({
+        id: crypto.randomUUID(),
+        seq: i + 1,
+        label,
+        course: "",
+        chooserId: null,
+        date: null,
+        status: "upcoming" as const,
+        scores: [],
+      })),
+    };
+  }
+
+  async loadSeason(): Promise<Season> {
+    return structuredClone(this.season);
+  }
+
+  async addPlayer(name: string, startingHandicap: number | null): Promise<void> {
+    this.season.players.push({ id: crypto.randomUUID(), name, startingHandicap, active: true });
+  }
+
+  async updatePlayer(
+    id: string,
+    fields: { name?: string; startingHandicap?: number | null; active?: boolean }
+  ): Promise<void> {
+    const p = this.season.players.find((p) => p.id === id);
+    if (!p) return;
+    if (fields.name !== undefined) p.name = fields.name;
+    if (fields.startingHandicap !== undefined) p.startingHandicap = fields.startingHandicap;
+    if (fields.active !== undefined) p.active = fields.active;
+  }
+
+  async createRound(fields: {
+    label: string;
+    course: string;
+    chooserId: string | null;
+    date: string | null;
+  }): Promise<void> {
+    const seq = Math.max(0, ...this.season.rounds.map((r) => r.seq)) + 1;
+    this.season.rounds.push({
+      id: crypto.randomUUID(),
+      seq,
+      label: fields.label,
+      course: fields.course,
+      chooserId: fields.chooserId,
+      date: fields.date,
+      status: "upcoming",
+      scores: [],
+    });
+  }
+
+  async updateRound(
+    id: string,
+    fields: {
+      label?: string;
+      course?: string;
+      chooserId?: string | null;
+      date?: string | null;
+      status?: "upcoming" | "played";
+    }
+  ): Promise<void> {
+    const r = this.season.rounds.find((r) => r.id === id);
+    if (!r) return;
+    if (fields.label !== undefined) r.label = fields.label;
+    if (fields.course !== undefined) r.course = fields.course;
+    if (fields.chooserId !== undefined) r.chooserId = fields.chooserId;
+    if (fields.date !== undefined) r.date = fields.date;
+    if (fields.status !== undefined) r.status = fields.status;
+  }
+
+  async deleteRound(id: string): Promise<void> {
+    this.season.rounds = this.season.rounds.filter((r) => r.id !== id);
+  }
+
+  async saveScores(roundId: string, scores: ScoreEntry[]): Promise<void> {
+    const r = this.season.rounds.find((r) => r.id === roundId);
+    if (!r) return;
+    r.scores = structuredClone(scores);
+    r.status = "played";
+  }
+}
+
+/* ------------------------------- Singleton ------------------------------ */
+
+const globalForStore = globalThis as unknown as { __winterCupStore?: Store };
+
+export function getStore(): Store {
+  if (!globalForStore.__winterCupStore) {
+    const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+    globalForStore.__winterCupStore = url ? new PostgresStore(url) : new MemoryStore();
+    if (!url) {
+      console.warn(
+        "[winter-cup] DATABASE_URL not set — using in-memory store. Data will not persist."
+      );
+    }
+  }
+  return globalForStore.__winterCupStore;
+}
