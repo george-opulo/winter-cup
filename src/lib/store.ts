@@ -29,13 +29,13 @@ export interface Store {
 }
 
 const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
-  { name: "O. Ballard", cap: 16 },
-  { name: "G. Goddard", cap: 18 },
-  { name: "G. Swainson", cap: 19 },
-  { name: "G. Archer", cap: 25 },
-  { name: "A. Everett", cap: 26 },
-  { name: "A. Turner", cap: 29 },
-  { name: "P. Andrews", cap: null },
+  { name: "Ollie Ballard", cap: 16 },
+  { name: "George Goddard", cap: 18 },
+  { name: "George Swainson", cap: 19 },
+  { name: "Pete Andrews", cap: 22 },
+  { name: "George Archer", cap: 25 },
+  { name: "Aled Everett", cap: 26 },
+  { name: "Adam Turner", cap: 29 },
 ];
 
 const SEED_ROUNDS = [
