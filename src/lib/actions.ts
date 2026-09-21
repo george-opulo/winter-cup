@@ -125,41 +125,25 @@ export async function saveScores(formData: FormData) {
 }
 
 /* ------------------------------ Scheduler ------------------------------- */
-/* Proposing dates and marking availability are open to the group (the URL
-   is only shared among the 7 players) — no PIN needed. Confirming the date
-   and deleting options stay admin-only. */
+/* Submitting free dates is open to the group (the URL is only shared among
+   the 7 players) — no PIN needed. Applying the auto-schedule is admin-only. */
 
-export async function proposeDate(formData: FormData) {
-  const roundId = String(formData.get("roundId") ?? "");
-  const date = String(formData.get("date") ?? "");
-  if (!roundId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
-  await getStore().addDateOption(roundId, date);
+export async function setFreeDate(playerId: string, date: string, free: boolean) {
+  if (!playerId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+  await getStore().setFreeDate(playerId, date, free);
   refresh();
 }
 
-export async function setDateAvailability(
-  dateOptionId: string,
-  playerId: string,
-  available: boolean
-) {
-  if (!dateOptionId || !playerId) return;
-  await getStore().setAvailability(dateOptionId, playerId, available);
-  refresh();
-}
-
-export async function removeDateOption(formData: FormData) {
+/** Applies the auto-schedule: fields named date_<roundId> set round dates. */
+export async function applySchedule(formData: FormData) {
   await requireAdmin();
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
-  await getStore().removeDateOption(id);
-  refresh();
-}
-
-export async function confirmRoundDate(formData: FormData) {
-  await requireAdmin();
-  const roundId = String(formData.get("roundId") ?? "");
-  const date = String(formData.get("date") ?? "");
-  if (!roundId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
-  await getStore().updateRound(roundId, { date });
+  const store = getStore();
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("date_")) continue;
+    const roundId = key.slice("date_".length);
+    const date = String(value);
+    if (!roundId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    await store.updateRound(roundId, { date });
+  }
   refresh();
 }

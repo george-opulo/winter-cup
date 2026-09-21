@@ -18,14 +18,6 @@ export interface ScoreEntry {
 
 export type RoundStatus = "upcoming" | "played";
 
-/** A candidate date for an upcoming round, with who can make it. */
-export interface DateOption {
-  id: string;
-  /** ISO date, e.g. "2026-10-10" */
-  date: string;
-  availablePlayerIds: string[];
-}
-
 export interface Round {
   id: string;
   /** Order within the season; results are computed in seq order. */
@@ -41,10 +33,17 @@ export interface Round {
   teeTime: string | null;
   status: RoundStatus;
   scores: ScoreEntry[];
-  dateOptions: DateOption[];
+}
+
+/** A day a player has said they're free to play. */
+export interface FreeDate {
+  playerId: string;
+  /** ISO date, e.g. "2026-10-10" */
+  date: string;
 }
 
 export interface Season {
   players: Player[];
   rounds: Round[];
+  freeDates: FreeDate[];
 }

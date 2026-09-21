@@ -565,22 +565,118 @@ button {
   margin-top: 12px;
 }
 
-.propose-bar {
+.gap-bar {
   display: flex;
   gap: 10px;
   align-items: center;
+  margin-bottom: 14px;
 }
 
-.propose-bar input[type="date"] {
-  flex: 1;
+.gap-bar label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+
+.gap-bar input {
+  width: 72px;
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--font-mono), ui-monospace, monospace;
-  padding: 10px 12px;
-  min-width: 0;
+  padding: 9px 10px;
+  text-align: center;
   color-scheme: dark;
+}
+
+/* ---------------------------- Availability ------------------------------ */
+
+.cal-month {
+  margin-bottom: 22px;
+}
+
+.cal-title {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  font-stretch: 76%;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-dow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 6px 0 4px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.cal-day .d {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day .c {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.56rem;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.cal-day.mine {
+  background: var(--pop);
+  border-color: var(--pop);
+  color: #fff;
+}
+
+.cal-day.mine .c {
+  color: #ffd9c8;
+}
+
+.cal-day.full {
+  outline: 2px solid var(--pop);
+  outline-offset: 1px;
+}
+
+.cal-day:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
 }
 
 /* --------------------------------- Nav ---------------------------------- */

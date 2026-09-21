@@ -10,7 +10,6 @@ export default async function RoundsPage() {
   const { results } = computeSeason(season);
   const names = new Map(season.players.map((p) => [p.id, p.name]));
   const resultsByRound = new Map(results.map((r) => [r.round.id, r]));
-  const playerCount = season.players.filter((p) => p.active).length;
 
   return (
     <>
@@ -26,19 +25,8 @@ export default async function RoundsPage() {
             chooser ? `${chooser}'s pick` : null,
           ].filter(Boolean);
 
-          let scheduleLine: string | null = null;
-          let scheduleHot = false;
-          if (!result && !round.date) {
-            if (round.dateOptions.length === 0) {
-              scheduleLine = "No dates yet — find a date →";
-            } else {
-              scheduleHot = true;
-              const best = Math.max(...round.dateOptions.map((d) => d.availablePlayerIds.length));
-              scheduleLine = `${round.dateOptions.length} date${
-                round.dateOptions.length === 1 ? "" : "s"
-              } proposed · best ${best}/${playerCount} →`;
-            }
-          }
+          const scheduleLine =
+            !result && !round.date ? "Awaiting schedule — add your free dates" : null;
 
           return (
             <Link key={round.id} href={`/rounds/${round.id}`}>
@@ -50,11 +38,7 @@ export default async function RoundsPage() {
                   </span>
                 </div>
                 {bits.length > 0 && <div className="sub">{bits.join(" · ")}</div>}
-                {scheduleLine && (
-                  <div className={`sub schedule-line${scheduleHot ? " hot" : ""}`}>
-                    {scheduleLine}
-                  </div>
-                )}
+                {scheduleLine && <div className="sub schedule-line">{scheduleLine}</div>}
                 {result && (
                   <div className="podium-line">
                     {result.entries
