@@ -41,20 +41,30 @@ const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
   { name: "Adam Turner", cap: 29 },
 ];
 
+/** Round assignments were drawn once at season start: Adam first (his pick
+ *  already booked), George Archer after Christmas, the rest at random. The
+ *  finale is one day, so both its rounds share a chooser. */
 const SEED_ROUNDS: Array<{
   label: string;
   course?: string;
   date?: string;
   teeTime?: string;
+  chooserName?: string;
 }> = [
-  { label: "Round 1", course: "Stratford Park Hotel", date: "2026-09-26", teeTime: "14:00" },
-  { label: "Round 2" },
-  { label: "Round 3" },
-  { label: "Round 4" },
-  { label: "Round 5" },
-  { label: "Round 6" },
-  { label: "Finale — Round 1" },
-  { label: "Finale — Round 2" },
+  {
+    label: "Round 1",
+    course: "Stratford Park Hotel",
+    date: "2026-09-26",
+    teeTime: "14:00",
+    chooserName: "Adam Turner",
+  },
+  { label: "Round 2", chooserName: "Aled Everett" },
+  { label: "Round 3", chooserName: "George Goddard" },
+  { label: "Round 4", chooserName: "Pete Andrews" },
+  { label: "Round 5", chooserName: "Ollie Ballard" },
+  { label: "Round 6", chooserName: "George Archer" },
+  { label: "Finale — Round 1", chooserName: "George Swainson" },
+  { label: "Finale — Round 2", chooserName: "George Swainson" },
 ];
 
 /* ------------------------------- Postgres ------------------------------- */
@@ -113,14 +123,18 @@ class PostgresStore implements Store {
 
     const existing = await sql`SELECT COUNT(*)::int AS n FROM players`;
     if ((existing[0] as { n: number }).n === 0) {
+      const idByName = new Map<string, string>();
       for (const p of SEED_PLAYERS) {
+        const id = crypto.randomUUID();
+        idByName.set(p.name, id);
         await sql`INSERT INTO players (id, name, starting_handicap)
-                  VALUES (${crypto.randomUUID()}, ${p.name}, ${p.cap})`;
+                  VALUES (${id}, ${p.name}, ${p.cap})`;
       }
       for (let i = 0; i < SEED_ROUNDS.length; i++) {
         const r = SEED_ROUNDS[i];
-        await sql`INSERT INTO rounds (id, seq, label, course, round_date, tee_time)
+        await sql`INSERT INTO rounds (id, seq, label, course, chooser_id, round_date, tee_time)
                   VALUES (${crypto.randomUUID()}, ${i + 1}, ${r.label}, ${r.course ?? ""},
+                          ${r.chooserName ? (idByName.get(r.chooserName) ?? null) : null},
                           ${r.date ?? null}, ${r.teeTime ?? null})`;
       }
     }
@@ -273,19 +287,21 @@ class MemoryStore implements Store {
   private season: Season;
 
   constructor() {
+    const players = SEED_PLAYERS.map((p) => ({
+      id: crypto.randomUUID(),
+      name: p.name,
+      startingHandicap: p.cap,
+      active: true,
+    }));
+    const idByName = new Map(players.map((p) => [p.name, p.id]));
     this.season = {
-      players: SEED_PLAYERS.map((p) => ({
-        id: crypto.randomUUID(),
-        name: p.name,
-        startingHandicap: p.cap,
-        active: true,
-      })),
+      players,
       rounds: SEED_ROUNDS.map((r, i) => ({
         id: crypto.randomUUID(),
         seq: i + 1,
         label: r.label,
         course: r.course ?? "",
-        chooserId: null,
+        chooserId: r.chooserName ? (idByName.get(r.chooserName) ?? null) : null,
         date: r.date ?? null,
         teeTime: r.teeTime ?? null,
         status: "upcoming" as const,

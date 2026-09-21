@@ -8,7 +8,6 @@ const LINKS = [
   { href: "/rounds", label: "Rounds" },
   { href: "/dates", label: "Dates" },
   { href: "/stats", label: "Stats" },
-  { href: "/wheel", label: "Wheel" },
   { href: "/admin", label: "Admin" },
 ];
 

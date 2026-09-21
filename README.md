@@ -1,8 +1,8 @@
 # ❄ Winter Cup
 
 A mobile-first web app for running the Winter Cup golf competition: leaderboard,
-score entry, automatic handicap adjustments, fixtures, stats, and a
-spin-the-wheel course-pick draw.
+score entry, automatic handicap adjustments, fixtures, availability collection
+with an auto-scheduler, and stats.
 
 ## The rules (as encoded)
 
@@ -29,9 +29,9 @@ in-season changes are never entered by hand.
 | --- | --- | --- |
 | `/` | everyone | Live leaderboard with current caps, W/L, totals |
 | `/rounds` | everyone | Fixtures & results; tap a played round for the full card |
+| `/dates` | everyone | Tap the days you're free — feeds the auto-scheduler |
 | `/stats` | everyone | Records + every handicap dock/bump of the season |
-| `/wheel` | everyone | Spin to draw who picks the next course |
-| `/admin` | PIN only | Enter/edit scores, manage rounds and players |
+| `/admin` | PIN only | Scores, auto-schedule, rounds and players |
 
 ## Deploying to Vercel
 
