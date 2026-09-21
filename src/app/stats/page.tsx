@@ -112,7 +112,7 @@ export default async function StatsPage() {
           </tbody>
         </table>
       </div>
-      <p className="muted" style={{ fontSize: "0.8rem" }}>
+      <p className="footnote">
         ↓ docked 1 for winning the round · ↑ up 1 for losing it
       </p>
     </>

@@ -39,12 +39,15 @@ export default async function RoundsPage() {
               </div>
               <div className="sub">{bits.join(" · ")}</div>
               {result && (
-                <div className="sub" style={{ marginTop: 8 }}>
+                <div className="podium-line">
                   {result.entries
                     .filter((e) => !e.absent)
                     .slice(0, 3)
-                    .map((e, i) => `${["🥇", "🥈", "🥉"][i]} ${names.get(e.playerId)} (${e.net})`)
-                    .join("  ")}
+                    .map((e, i) => (
+                      <span key={e.playerId} style={{ marginRight: 12 }}>
+                        <span className="p">{i + 1}</span> {names.get(e.playerId)} ({e.net})
+                      </span>
+                    ))}
                 </div>
               )}
             </div>

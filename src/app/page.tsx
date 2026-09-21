@@ -12,28 +12,27 @@ export default async function LeaderboardPage() {
       <div className="board">
         {standings.map((s) => (
           <div key={s.player.id} className={`row${s.position === 1 ? " leader" : ""}`}>
-            <div className="pos">{s.position === 0 ? "–" : s.position}</div>
+            <div className="pos">
+              {s.position === 0 ? "—" : String(s.position).padStart(2, "0")}
+            </div>
             <div className="who">
-              <div className="name">
-                {s.player.name}
-                {s.position === 1 && " 🏆"}
-              </div>
+              <div className="name">{s.player.name}</div>
               <div className="meta">
                 Cap {s.currentCap ?? "TBC"} · Played {s.played}
-                {s.absences > 0 && ` (+${s.absences} missed)`} · {s.wins}W {s.losses}L
+                {s.absences > 0 && ` (+${s.absences} out)`} · {s.wins}W {s.losses}L
               </div>
             </div>
             <div className="total">
-              {s.played + s.absences === 0 ? "–" : s.total}
-              <span className="unit">net total</span>
+              {s.played + s.absences === 0 ? "—" : s.total}
+              <span className="unit">net</span>
             </div>
           </div>
         ))}
       </div>
-      <p className="muted" style={{ fontSize: "0.8rem", marginTop: 16 }}>
+      <p className="footnote" style={{ marginTop: 16 }}>
         {results.length === 0
-          ? "No rounds played yet — the table shows starting handicaps. Lowest cumulative net wins the cup."
-          : `After ${results.length} round${results.length === 1 ? "" : "s"}. Lowest cumulative net wins the cup.`}
+          ? "No rounds played — table shows starting caps. Lowest cumulative net wins."
+          : `After round ${results.length} of ${season.rounds.length}. Lowest cumulative net wins.`}
       </p>
     </>
   );

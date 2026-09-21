@@ -2,7 +2,16 @@
 
 import { useMemo, useRef, useState } from "react";
 
-const COLORS = ["#93a5f7", "#f5c95c", "#6fd3a3", "#f0918f", "#7fc8e8", "#d5a6f0", "#f2b46d"];
+// Brand palette segments; `dark` picks the label colour that reads on top.
+const SEGMENTS = [
+  { fill: "#17372b", dark: true },
+  { fill: "#9fb9cc", dark: false },
+  { fill: "#f6f4ee", dark: false },
+  { fill: "#c8401f", dark: true },
+  { fill: "#4e7a5a", dark: true },
+  { fill: "#c9c4b6", dark: false },
+  { fill: "#dfd9c9", dark: false },
+];
 
 interface WheelPlayer {
   id: string;
@@ -25,9 +34,10 @@ export function Wheel({ players }: { players: WheelPlayer[] }) {
   const segment = 360 / Math.max(n, 1);
 
   const gradient = useMemo(() => {
-    if (n === 0) return "conic-gradient(#223055 0deg 360deg)";
+    if (n === 0) return "conic-gradient(#c9c4b6 0deg 360deg)";
     const stops = pool.map(
-      (_, i) => `${COLORS[i % COLORS.length]} ${i * segment}deg ${(i + 1) * segment}deg`
+      (_, i) =>
+        `${SEGMENTS[i % SEGMENTS.length].fill} ${i * segment}deg ${(i + 1) * segment}deg`
     );
     return `conic-gradient(from 0deg, ${stops.join(", ")})`;
   }, [pool, n, segment]);
@@ -64,7 +74,7 @@ export function Wheel({ players }: { players: WheelPlayer[] }) {
       </label>
 
       {n === 0 ? (
-        <p className="muted">Everyone has picked a course already this season. 🎉</p>
+        <p className="muted">Everyone has picked a course already this season.</p>
       ) : (
         <>
           <div className="wheel-pointer" />
@@ -78,6 +88,7 @@ export function Wheel({ players }: { players: WheelPlayer[] }) {
                 className="label"
                 style={{
                   transform: `rotate(${i * segment + segment / 2 - 90}deg) translate(28%, -50%)`,
+                  color: SEGMENTS[i % SEGMENTS.length].dark ? "#eeebe3" : "#14201b",
                 }}
               >
                 {p.name}
@@ -85,7 +96,7 @@ export function Wheel({ players }: { players: WheelPlayer[] }) {
             ))}
           </div>
           <div className="wheel-result" aria-live="polite">
-            {result ? `${result} picks the course! ⛳` : spinning ? "…" : " "}
+            {result ? `${result} picks the course` : spinning ? "…" : " "}
           </div>
           <button className="btn" onClick={spin} disabled={spinning}>
             {spinning ? "Spinning…" : "Spin the wheel"}

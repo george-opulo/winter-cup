@@ -1,38 +1,42 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit } from "next/font/google";
+import { Archivo, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "./components/Nav";
-import { Snow } from "./components/Snow";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-main" });
+const archivo = Archivo({
+  subsets: ["latin"],
+  axes: ["wdth"],
+  variable: "--font-display",
+});
+
+const splineMono = Spline_Sans_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "Winter Cup",
-  description: "Winter Cup golf — leaderboard, rounds, handicaps and the wheel of destiny",
+  description: "Winter Cup golf — leaderboard, rounds, handicaps and the wheel",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0f1e",
+  themeColor: "#eeebe3",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={outfit.variable}>
-      <body>
-        <Snow />
-        <div className="content">
-          <main className="shell">
-            <header className="masthead">
-              <h1>
-                <span className="flake">❄</span>Winter Cup
-              </h1>
-              <span className="season">2026/27</span>
-            </header>
-            {children}
-          </main>
-        </div>
+    <html lang="en" className={`${archivo.variable} ${splineMono.variable}`}>
+      <body style={{ ["--font-body" as string]: "var(--font-display)" }}>
+        <main className="shell">
+          {/* Swap the wordmark for the logo <img> when it's ready */}
+          <header className="masthead">
+            <h1 className="wordmark">Winter Cup</h1>
+            <span className="season">7 players · Sep—Mar · 2026/27</span>
+          </header>
+          {children}
+        </main>
         <Nav />
       </body>
     </html>

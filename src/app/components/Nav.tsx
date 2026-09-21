@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/", label: "Table", ico: "🏆" },
-  { href: "/rounds", label: "Rounds", ico: "⛳" },
-  { href: "/stats", label: "Stats", ico: "📊" },
-  { href: "/wheel", label: "Wheel", ico: "🎡" },
-  { href: "/admin", label: "Admin", ico: "🔒" },
+  { href: "/", label: "Table" },
+  { href: "/rounds", label: "Rounds" },
+  { href: "/stats", label: "Stats" },
+  { href: "/wheel", label: "Wheel" },
+  { href: "/admin", label: "Admin" },
 ];
 
 export function Nav() {
@@ -20,7 +20,6 @@ export function Nav() {
           const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
           return (
             <Link key={l.href} href={l.href} className={active ? "active" : ""}>
-              <span className="ico">{l.ico}</span>
               {l.label}
             </Link>
           );

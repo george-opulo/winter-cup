@@ -57,7 +57,7 @@ export default async function RoundDetailPage({
         </table>
       </div>
       {result.margin != null && (
-        <p className="muted" style={{ fontSize: "0.85rem" }}>
+        <p className="footnote">
           Winning margin: {result.margin} stroke{result.margin === 1 ? "" : "s"}.
           {" "}No-shows score the worst net of the round.
         </p>
