@@ -4,13 +4,13 @@ import { useMemo, useRef, useState } from "react";
 
 // Brand palette segments; `dark` picks the label colour that reads on top.
 const SEGMENTS = [
-  { fill: "#17372b", dark: true },
-  { fill: "#9fb9cc", dark: false },
-  { fill: "#f6f4ee", dark: false },
-  { fill: "#c8401f", dark: true },
-  { fill: "#4e7a5a", dark: true },
-  { fill: "#c9c4b6", dark: false },
-  { fill: "#dfd9c9", dark: false },
+  { fill: "#ece9dd", dark: false },
+  { fill: "#1e4636", dark: true },
+  { fill: "#ff5a1f", dark: true },
+  { fill: "#8ca79a", dark: false },
+  { fill: "#10281f", dark: true },
+  { fill: "#d8d3c3", dark: false },
+  { fill: "#2e5c46", dark: true },
 ];
 
 interface WheelPlayer {
@@ -88,7 +88,7 @@ export function Wheel({ players }: { players: WheelPlayer[] }) {
                 className="label"
                 style={{
                   transform: `rotate(${i * segment + segment / 2 - 90}deg) translate(28%, -50%)`,
-                  color: SEGMENTS[i % SEGMENTS.length].dark ? "#eeebe3" : "#14201b",
+                  color: SEGMENTS[i % SEGMENTS.length].dark ? "#ece9dd" : "#0b1d16",
                 }}
               >
                 {p.name}

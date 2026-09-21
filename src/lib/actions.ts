@@ -121,3 +121,43 @@ export async function saveScores(formData: FormData) {
   await getStore().saveScores(roundId, scores);
   refresh();
 }
+
+/* ------------------------------ Scheduler ------------------------------- */
+/* Proposing dates and marking availability are open to the group (the URL
+   is only shared among the 7 players) — no PIN needed. Confirming the date
+   and deleting options stay admin-only. */
+
+export async function proposeDate(formData: FormData) {
+  const roundId = String(formData.get("roundId") ?? "");
+  const date = String(formData.get("date") ?? "");
+  if (!roundId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+  await getStore().addDateOption(roundId, date);
+  refresh();
+}
+
+export async function setDateAvailability(
+  dateOptionId: string,
+  playerId: string,
+  available: boolean
+) {
+  if (!dateOptionId || !playerId) return;
+  await getStore().setAvailability(dateOptionId, playerId, available);
+  refresh();
+}
+
+export async function removeDateOption(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  await getStore().removeDateOption(id);
+  refresh();
+}
+
+export async function confirmRoundDate(formData: FormData) {
+  await requireAdmin();
+  const roundId = String(formData.get("roundId") ?? "");
+  const date = String(formData.get("date") ?? "");
+  if (!roundId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+  await getStore().updateRound(roundId, { date });
+  refresh();
+}

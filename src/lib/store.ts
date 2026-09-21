@@ -26,6 +26,9 @@ export interface Store {
   ): Promise<void>;
   deleteRound(id: string): Promise<void>;
   saveScores(roundId: string, scores: ScoreEntry[]): Promise<void>;
+  addDateOption(roundId: string, date: string): Promise<void>;
+  removeDateOption(dateOptionId: string): Promise<void>;
+  setAvailability(dateOptionId: string, playerId: string, available: boolean): Promise<void>;
 }
 
 const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
@@ -39,12 +42,12 @@ const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
 ];
 
 const SEED_ROUNDS = [
-  "September",
-  "October",
-  "November",
-  "December",
-  "January",
-  "February",
+  "Round 1",
+  "Round 2",
+  "Round 3",
+  "Round 4",
+  "Round 5",
+  "Round 6",
   "Finale — Round 1",
   "Finale — Round 2",
 ];
@@ -95,6 +98,16 @@ class PostgresStore implements Store {
       override_net INTEGER,
       PRIMARY KEY (round_id, player_id)
     )`;
+    await sql`CREATE TABLE IF NOT EXISTS round_dates (
+      id TEXT PRIMARY KEY,
+      round_id TEXT NOT NULL,
+      date_option DATE NOT NULL
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS availability (
+      date_id TEXT NOT NULL,
+      player_id TEXT NOT NULL,
+      PRIMARY KEY (date_id, player_id)
+    )`;
 
     const existing = await sql`SELECT COUNT(*)::int AS n FROM players`;
     if ((existing[0] as { n: number }).n === 0) {
@@ -112,11 +125,13 @@ class PostgresStore implements Store {
   async loadSeason(): Promise<Season> {
     await this.ensure();
     const sql = this.sql;
-    const [playerRows, roundRows, scoreRows] = await Promise.all([
+    const [playerRows, roundRows, scoreRows, dateRows, availRows] = await Promise.all([
       sql`SELECT id, name, starting_handicap, active FROM players ORDER BY created_at`,
       sql`SELECT id, seq, label, course, chooser_id, round_date::text AS round_date, status
           FROM rounds ORDER BY seq`,
       sql`SELECT round_id, player_id, gross, absent, override_net FROM scores`,
+      sql`SELECT id, round_id, date_option::text AS date_option FROM round_dates ORDER BY date_option`,
+      sql`SELECT date_id, player_id FROM availability`,
     ]);
 
     const players: Player[] = (playerRows as Array<Record<string, unknown>>).map((r) => ({
@@ -138,6 +153,24 @@ class PostgresStore implements Store {
       scoresByRound.set(r.round_id as string, list);
     }
 
+    const availByDate = new Map<string, string[]>();
+    for (const a of availRows as Array<Record<string, unknown>>) {
+      const list = availByDate.get(a.date_id as string) ?? [];
+      list.push(a.player_id as string);
+      availByDate.set(a.date_id as string, list);
+    }
+
+    const datesByRound = new Map<string, Round["dateOptions"]>();
+    for (const d of dateRows as Array<Record<string, unknown>>) {
+      const list = datesByRound.get(d.round_id as string) ?? [];
+      list.push({
+        id: d.id as string,
+        date: d.date_option as string,
+        availablePlayerIds: availByDate.get(d.id as string) ?? [],
+      });
+      datesByRound.set(d.round_id as string, list);
+    }
+
     const rounds: Round[] = (roundRows as Array<Record<string, unknown>>).map((r) => ({
       id: r.id as string,
       seq: r.seq as number,
@@ -147,6 +180,7 @@ class PostgresStore implements Store {
       date: r.round_date as string | null,
       status: r.status as Round["status"],
       scores: scoresByRound.get(r.id as string) ?? [],
+      dateOptions: datesByRound.get(r.id as string) ?? [],
     }));
 
     return { players, rounds };
@@ -210,8 +244,35 @@ class PostgresStore implements Store {
 
   async deleteRound(id: string): Promise<void> {
     await this.ensure();
+    await this.sql`DELETE FROM availability WHERE date_id IN
+                   (SELECT id FROM round_dates WHERE round_id = ${id})`;
+    await this.sql`DELETE FROM round_dates WHERE round_id = ${id}`;
     await this.sql`DELETE FROM scores WHERE round_id = ${id}`;
     await this.sql`DELETE FROM rounds WHERE id = ${id}`;
+  }
+
+  async addDateOption(roundId: string, date: string): Promise<void> {
+    await this.ensure();
+    await this.sql`INSERT INTO round_dates (id, round_id, date_option)
+                   VALUES (${crypto.randomUUID()}, ${roundId}, ${date})`;
+  }
+
+  async removeDateOption(dateOptionId: string): Promise<void> {
+    await this.ensure();
+    await this.sql`DELETE FROM availability WHERE date_id = ${dateOptionId}`;
+    await this.sql`DELETE FROM round_dates WHERE id = ${dateOptionId}`;
+  }
+
+  async setAvailability(dateOptionId: string, playerId: string, available: boolean): Promise<void> {
+    await this.ensure();
+    if (available) {
+      await this.sql`INSERT INTO availability (date_id, player_id)
+                     VALUES (${dateOptionId}, ${playerId})
+                     ON CONFLICT DO NOTHING`;
+    } else {
+      await this.sql`DELETE FROM availability
+                     WHERE date_id = ${dateOptionId} AND player_id = ${playerId}`;
+    }
   }
 
   async saveScores(roundId: string, scores: ScoreEntry[]): Promise<void> {
@@ -249,6 +310,7 @@ class MemoryStore implements Store {
         date: null,
         status: "upcoming" as const,
         scores: [],
+        dateOptions: [],
       })),
     };
   }
@@ -288,6 +350,7 @@ class MemoryStore implements Store {
       date: fields.date,
       status: "upcoming",
       scores: [],
+      dateOptions: [],
     });
   }
 
@@ -319,6 +382,31 @@ class MemoryStore implements Store {
     if (!r) return;
     r.scores = structuredClone(scores);
     r.status = "played";
+  }
+
+  async addDateOption(roundId: string, date: string): Promise<void> {
+    const r = this.season.rounds.find((r) => r.id === roundId);
+    if (!r) return;
+    r.dateOptions.push({ id: crypto.randomUUID(), date, availablePlayerIds: [] });
+    r.dateOptions.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  async removeDateOption(dateOptionId: string): Promise<void> {
+    for (const r of this.season.rounds) {
+      r.dateOptions = r.dateOptions.filter((d) => d.id !== dateOptionId);
+    }
+  }
+
+  async setAvailability(dateOptionId: string, playerId: string, available: boolean): Promise<void> {
+    for (const r of this.season.rounds) {
+      const d = r.dateOptions.find((d) => d.id === dateOptionId);
+      if (!d) continue;
+      const has = d.availablePlayerIds.includes(playerId);
+      if (available && !has) d.availablePlayerIds.push(playerId);
+      if (!available && has) {
+        d.availablePlayerIds = d.availablePlayerIds.filter((id) => id !== playerId);
+      }
+    }
   }
 }
 
