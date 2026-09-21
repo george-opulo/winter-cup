@@ -1,15 +1,9 @@
 import Link from "next/link";
 import { computeSeason } from "@/lib/engine";
+import { formatWhen } from "@/lib/format";
 import { getStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
-
-function formatDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso + "T00:00:00");
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
-}
 
 export default async function RoundsPage() {
   const season = await getStore().loadSeason();
@@ -27,7 +21,7 @@ export default async function RoundsPage() {
           const result = resultsByRound.get(round.id);
           const chooser = round.chooserId ? names.get(round.chooserId) : null;
           const bits = [
-            formatDate(round.date),
+            formatWhen(round.date, round.teeTime),
             round.course || null,
             chooser ? `${chooser}'s pick` : null,
           ].filter(Boolean);

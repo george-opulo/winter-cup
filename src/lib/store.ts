@@ -13,6 +13,7 @@ export interface Store {
     course: string;
     chooserId: string | null;
     date: string | null;
+    teeTime: string | null;
   }): Promise<void>;
   updateRound(
     id: string,
@@ -21,6 +22,7 @@ export interface Store {
       course?: string;
       chooserId?: string | null;
       date?: string | null;
+      teeTime?: string | null;
       status?: "upcoming" | "played";
     }
   ): Promise<void>;
@@ -41,15 +43,20 @@ const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
   { name: "Adam Turner", cap: 29 },
 ];
 
-const SEED_ROUNDS = [
-  "Round 1",
-  "Round 2",
-  "Round 3",
-  "Round 4",
-  "Round 5",
-  "Round 6",
-  "Finale — Round 1",
-  "Finale — Round 2",
+const SEED_ROUNDS: Array<{
+  label: string;
+  course?: string;
+  date?: string;
+  teeTime?: string;
+}> = [
+  { label: "Round 1", course: "Stratford Park Hotel", date: "2026-09-26", teeTime: "14:00" },
+  { label: "Round 2" },
+  { label: "Round 3" },
+  { label: "Round 4" },
+  { label: "Round 5" },
+  { label: "Round 6" },
+  { label: "Finale — Round 1" },
+  { label: "Finale — Round 2" },
 ];
 
 /* ------------------------------- Postgres ------------------------------- */
@@ -88,8 +95,10 @@ class PostgresStore implements Store {
       course TEXT NOT NULL DEFAULT '',
       chooser_id TEXT,
       round_date DATE,
+      tee_time TEXT,
       status TEXT NOT NULL DEFAULT 'upcoming'
     )`;
+    await sql`ALTER TABLE rounds ADD COLUMN IF NOT EXISTS tee_time TEXT`;
     await sql`CREATE TABLE IF NOT EXISTS scores (
       round_id TEXT NOT NULL,
       player_id TEXT NOT NULL,
@@ -116,8 +125,10 @@ class PostgresStore implements Store {
                   VALUES (${crypto.randomUUID()}, ${p.name}, ${p.cap})`;
       }
       for (let i = 0; i < SEED_ROUNDS.length; i++) {
-        await sql`INSERT INTO rounds (id, seq, label)
-                  VALUES (${crypto.randomUUID()}, ${i + 1}, ${SEED_ROUNDS[i]})`;
+        const r = SEED_ROUNDS[i];
+        await sql`INSERT INTO rounds (id, seq, label, course, round_date, tee_time)
+                  VALUES (${crypto.randomUUID()}, ${i + 1}, ${r.label}, ${r.course ?? ""},
+                          ${r.date ?? null}, ${r.teeTime ?? null})`;
       }
     }
   }
@@ -127,7 +138,7 @@ class PostgresStore implements Store {
     const sql = this.sql;
     const [playerRows, roundRows, scoreRows, dateRows, availRows] = await Promise.all([
       sql`SELECT id, name, starting_handicap, active FROM players ORDER BY created_at`,
-      sql`SELECT id, seq, label, course, chooser_id, round_date::text AS round_date, status
+      sql`SELECT id, seq, label, course, chooser_id, round_date::text AS round_date, tee_time, status
           FROM rounds ORDER BY seq`,
       sql`SELECT round_id, player_id, gross, absent, override_net FROM scores`,
       sql`SELECT id, round_id, date_option::text AS date_option FROM round_dates ORDER BY date_option`,
@@ -178,6 +189,7 @@ class PostgresStore implements Store {
       course: r.course as string,
       chooserId: r.chooser_id as string | null,
       date: r.round_date as string | null,
+      teeTime: r.tee_time as string | null,
       status: r.status as Round["status"],
       scores: scoresByRound.get(r.id as string) ?? [],
       dateOptions: datesByRound.get(r.id as string) ?? [],
@@ -210,13 +222,14 @@ class PostgresStore implements Store {
     course: string;
     chooserId: string | null;
     date: string | null;
+    teeTime: string | null;
   }): Promise<void> {
     await this.ensure();
     const max = await this.sql`SELECT COALESCE(MAX(seq), 0)::int AS n FROM rounds`;
     const seq = (max[0] as { n: number }).n + 1;
-    await this.sql`INSERT INTO rounds (id, seq, label, course, chooser_id, round_date)
+    await this.sql`INSERT INTO rounds (id, seq, label, course, chooser_id, round_date, tee_time)
                    VALUES (${crypto.randomUUID()}, ${seq}, ${fields.label}, ${fields.course},
-                           ${fields.chooserId}, ${fields.date})`;
+                           ${fields.chooserId}, ${fields.date}, ${fields.teeTime})`;
   }
 
   async updateRound(
@@ -226,6 +239,7 @@ class PostgresStore implements Store {
       course?: string;
       chooserId?: string | null;
       date?: string | null;
+      teeTime?: string | null;
       status?: "upcoming" | "played";
     }
   ): Promise<void> {
@@ -238,6 +252,8 @@ class PostgresStore implements Store {
       await this.sql`UPDATE rounds SET chooser_id = ${fields.chooserId} WHERE id = ${id}`;
     if (fields.date !== undefined)
       await this.sql`UPDATE rounds SET round_date = ${fields.date} WHERE id = ${id}`;
+    if (fields.teeTime !== undefined)
+      await this.sql`UPDATE rounds SET tee_time = ${fields.teeTime} WHERE id = ${id}`;
     if (fields.status !== undefined)
       await this.sql`UPDATE rounds SET status = ${fields.status} WHERE id = ${id}`;
   }
@@ -301,13 +317,14 @@ class MemoryStore implements Store {
         startingHandicap: p.cap,
         active: true,
       })),
-      rounds: SEED_ROUNDS.map((label, i) => ({
+      rounds: SEED_ROUNDS.map((r, i) => ({
         id: crypto.randomUUID(),
         seq: i + 1,
-        label,
-        course: "",
+        label: r.label,
+        course: r.course ?? "",
         chooserId: null,
-        date: null,
+        date: r.date ?? null,
+        teeTime: r.teeTime ?? null,
         status: "upcoming" as const,
         scores: [],
         dateOptions: [],
@@ -339,6 +356,7 @@ class MemoryStore implements Store {
     course: string;
     chooserId: string | null;
     date: string | null;
+    teeTime: string | null;
   }): Promise<void> {
     const seq = Math.max(0, ...this.season.rounds.map((r) => r.seq)) + 1;
     this.season.rounds.push({
@@ -348,6 +366,7 @@ class MemoryStore implements Store {
       course: fields.course,
       chooserId: fields.chooserId,
       date: fields.date,
+      teeTime: fields.teeTime,
       status: "upcoming",
       scores: [],
       dateOptions: [],
@@ -361,6 +380,7 @@ class MemoryStore implements Store {
       course?: string;
       chooserId?: string | null;
       date?: string | null;
+      teeTime?: string | null;
       status?: "upcoming" | "played";
     }
   ): Promise<void> {
@@ -370,6 +390,7 @@ class MemoryStore implements Store {
     if (fields.course !== undefined) r.course = fields.course;
     if (fields.chooserId !== undefined) r.chooserId = fields.chooserId;
     if (fields.date !== undefined) r.date = fields.date;
+    if (fields.teeTime !== undefined) r.teeTime = fields.teeTime;
     if (fields.status !== undefined) r.status = fields.status;
   }
 

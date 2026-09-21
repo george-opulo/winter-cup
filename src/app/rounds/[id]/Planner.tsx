@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { confirmRoundDate, proposeDate, removeDateOption, setDateAvailability } from "@/lib/actions";
+import { formatWhen } from "@/lib/format";
 
 interface PlannerPlayer {
   id: string;
@@ -20,18 +21,13 @@ interface PlannerRound {
   label: string;
   course: string;
   date: string | null;
+  teeTime: string | null;
   chooserName: string | null;
   dateOptions: PlannerDate[];
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso + "T00:00:00");
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  return formatWhen(iso, null) ?? iso;
 }
 
 export function Planner({
@@ -81,7 +77,7 @@ export function Planner({
     <>
       {round.date && (
         <div className="confirmed-banner">
-          Confirmed — {formatDate(round.date)}
+          Confirmed — {formatWhen(round.date, round.teeTime)}
           {round.course ? ` · ${round.course}` : ""}
         </div>
       )}

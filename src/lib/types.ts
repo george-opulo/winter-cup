@@ -37,6 +37,8 @@ export interface Round {
   chooserId: string | null;
   /** ISO date, e.g. "2026-09-27" */
   date: string | null;
+  /** 24h tee time, e.g. "14:00" */
+  teeTime: string | null;
   status: RoundStatus;
   scores: ScoreEntry[];
   dateOptions: DateOption[];

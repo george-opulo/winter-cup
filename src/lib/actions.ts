@@ -59,6 +59,7 @@ export async function createRound(formData: FormData) {
     course: String(formData.get("course") ?? "").trim(),
     chooserId: String(formData.get("chooserId") ?? "") || null,
     date: String(formData.get("date") ?? "") || null,
+    teeTime: String(formData.get("teeTime") ?? "") || null,
   });
   refresh();
 }
@@ -72,6 +73,7 @@ export async function updateRound(formData: FormData) {
     course: String(formData.get("course") ?? "").trim(),
     chooserId: String(formData.get("chooserId") ?? "") || null,
     date: String(formData.get("date") ?? "") || null,
+    teeTime: String(formData.get("teeTime") ?? "") || null,
   });
   refresh();
 }

@@ -93,6 +93,7 @@ export default async function RoundDetailPage({
           label: round.label,
           course: round.course,
           date: round.date,
+          teeTime: round.teeTime,
           chooserName: round.chooserId ? (names.get(round.chooserId) ?? null) : null,
           dateOptions: round.dateOptions,
         }}

@@ -135,6 +135,10 @@ export default async function AdminPage({
               <label>Date</label>
               <input name="date" type="date" defaultValue={r.date ?? ""} />
             </div>
+            <div className="field">
+              <label>Tee time</label>
+              <input name="teeTime" type="time" defaultValue={r.teeTime ?? ""} />
+            </div>
             <div className="inline-actions">
               <SubmitButton className="btn small">Save</SubmitButton>
             </div>
@@ -167,6 +171,10 @@ export default async function AdminPage({
           <div className="field">
             <label>Date</label>
             <input name="date" type="date" />
+          </div>
+          <div className="field">
+            <label>Tee time</label>
+            <input name="teeTime" type="time" />
           </div>
           <SubmitButton className="btn small">Add round</SubmitButton>
         </form>
