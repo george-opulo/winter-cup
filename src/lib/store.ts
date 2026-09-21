@@ -58,13 +58,13 @@ const SEED_ROUNDS: Array<{
     teeTime: "14:00",
     chooserName: "Adam Turner",
   },
-  { label: "Round 2", chooserName: "Aled Everett" },
+  { label: "Round 2", chooserName: "George Swainson" },
   { label: "Round 3", chooserName: "George Goddard" },
-  { label: "Round 4", chooserName: "Pete Andrews" },
+  { label: "Round 4", chooserName: "Aled Everett" },
   { label: "Round 5", chooserName: "Ollie Ballard" },
   { label: "Round 6", chooserName: "George Archer" },
-  { label: "Finale — Round 1", chooserName: "George Swainson" },
-  { label: "Finale — Round 2", chooserName: "George Swainson" },
+  { label: "Finale — Round 1", chooserName: "Pete Andrews" },
+  { label: "Finale — Round 2", chooserName: "Pete Andrews" },
 ];
 
 /* ------------------------------- Postgres ------------------------------- */
