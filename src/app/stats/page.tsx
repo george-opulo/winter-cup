@@ -3,6 +3,13 @@ import { getStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
+function shortLabel(label: string): string {
+  const m = /^Round (\d+)/.exec(label);
+  if (m) return `R${m[1]}`;
+  if (label.startsWith("Finale")) return "Fin";
+  return label.slice(0, 3);
+}
+
 export default async function StatsPage() {
   const season = await getStore().loadSeason();
   const { results, standings, capEvents } = computeSeason(season);
@@ -100,7 +107,8 @@ export default async function StatsPage() {
                     ) : (
                       events.map((e, i) => (
                         <span key={i} className={e.change < 0 ? "cap-down" : "cap-up"}>
-                          {e.roundLabel.slice(0, 3)} {e.change < 0 ? "↓" : "↑"}
+                          {shortLabel(e.roundLabel)} {e.change < 0 ? "↓" : "↑"}
+                          {Math.abs(e.change) > 1 ? Math.abs(e.change) : ""}
                           {i < events.length - 1 ? " · " : ""}
                         </span>
                       ))
@@ -113,7 +121,8 @@ export default async function StatsPage() {
         </table>
       </div>
       <p className="footnote">
-        ↓ docked 1 for winning the round · ↑ up 1 for losing it
+        ↓ docked 1 for winning · ↑ up 1 for losing · a bigger ↓ is the guillotine: play 3+ under
+        your cap and it's cut to what you shot
       </p>
     </>
   );

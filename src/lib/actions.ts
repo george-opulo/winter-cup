@@ -60,6 +60,7 @@ export async function createRound(formData: FormData) {
     chooserId: String(formData.get("chooserId") ?? "") || null,
     date: String(formData.get("date") ?? "") || null,
     teeTime: String(formData.get("teeTime") ?? "") || null,
+    par: Number(formData.get("par")) || 72,
   });
   refresh();
 }
@@ -74,6 +75,7 @@ export async function updateRound(formData: FormData) {
     chooserId: String(formData.get("chooserId") ?? "") || null,
     date: String(formData.get("date") ?? "") || null,
     teeTime: String(formData.get("teeTime") ?? "") || null,
+    par: Number(formData.get("par")) || 72,
   });
   refresh();
 }

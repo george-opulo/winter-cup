@@ -6,8 +6,25 @@ function player(id: string, cap: number | null): Player {
   return { id, name: id, startingHandicap: cap, active: true };
 }
 
-function round(id: string, seq: number, scores: Round["scores"], status: Round["status"] = "played"): Round {
-  return { id, seq, label: id, course: "", chooserId: null, date: null, status, scores };
+function round(
+  id: string,
+  seq: number,
+  scores: Round["scores"],
+  status: Round["status"] = "played",
+  par = 72
+): Round {
+  return {
+    id,
+    seq,
+    label: id,
+    course: "",
+    chooserId: null,
+    date: null,
+    teeTime: null,
+    par,
+    status,
+    scores,
+  };
 }
 
 function score(playerId: string, gross: number | null, absent = false, overrideNet: number | null = null) {
@@ -17,6 +34,7 @@ function score(playerId: string, gross: number | null, absent = false, overrideN
 describe("computeSeason", () => {
   it("computes nets, winner and loser, and adjusts caps", () => {
     const season: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 20), player("c", 15)],
       rounds: [
         round("r1", 1, [score("a", 85), score("b", 99), score("c", 92)]),
@@ -38,6 +56,7 @@ describe("computeSeason", () => {
 
   it("uses the updated cap in the next round", () => {
     const season: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 20)],
       rounds: [
         round("r1", 1, [score("a", 85), score("b", 99)]), // a wins -> cap 9, b cap 21
@@ -53,6 +72,7 @@ describe("computeSeason", () => {
 
   it("ties for first and last both adjust; whole-field tie changes nothing", () => {
     const tied: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 12), player("c", 20)],
       rounds: [round("r1", 1, [score("a", 85), score("b", 87), score("c", 99)])],
     };
@@ -64,6 +84,7 @@ describe("computeSeason", () => {
     expect(t.currentCaps.get("c")).toBe(21);
 
     const allSame: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 12)],
       rounds: [round("r1", 1, [score("a", 85), score("b", 87)])],
     };
@@ -75,6 +96,7 @@ describe("computeSeason", () => {
 
   it("no-show gets the worst net of the round, no cap change, override wins", () => {
     const season: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 20), player("c", 15), player("d", 18)],
       rounds: [
         round("r1", 1, [
@@ -103,6 +125,7 @@ describe("computeSeason", () => {
 
   it("skips upcoming rounds and players without a cap", () => {
     const season: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 20), player("p", null)],
       rounds: [
         round("r1", 1, [score("a", 85), score("b", 99), score("p", 80)]),
@@ -120,6 +143,7 @@ describe("computeSeason", () => {
 
   it("shares positions on tied totals", () => {
     const season: Season = {
+      freeDates: [],
       players: [player("a", 10), player("b", 12), player("c", 20)],
       rounds: [round("r1", 1, [score("a", 85), score("b", 87), score("c", 99)])],
     };
@@ -127,5 +151,50 @@ describe("computeSeason", () => {
     expect(standings[0].position).toBe(1);
     expect(standings[1].position).toBe(1);
     expect(standings[2].position).toBe(3);
+  });
+
+  it("guillotines 3+ under cap: cut to match, round banked, no stacked -1", () => {
+    const season: Season = {
+      freeDates: [],
+      players: [player("a", 20), player("b", 25)],
+      rounds: [
+        round("r1", 1, [score("a", 89), score("b", 100)]), // a nets 69 (par-3)
+        round("r2", 2, [score("a", 89), score("b", 100)]),
+      ],
+    };
+    const { results, currentCaps } = computeSeason(season);
+    const a1 = results[0].entries.find((e) => e.playerId === "a")!;
+    expect(a1.guillotined).toBe(true);
+    expect(a1.net).toBe(69); // banked off the old cap
+    expect(a1.isWinner).toBe(true);
+    expect(a1.capAfter).toBe(17); // 89 - 72; winner's -1 does NOT stack
+    expect(results[0].entries.find((e) => e.playerId === "b")!.capAfter).toBe(26);
+    const a2 = results[1].entries.find((e) => e.playerId === "a")!;
+    expect(a2.capUsed).toBe(17); // next round plays off the new cap
+    expect(a2.net).toBe(72);
+    expect(currentCaps.get("a")).toBe(16); // ordinary win in r2 -> -1
+  });
+
+  it("2 under cap stays un-guillotined; normal winner's -1 applies", () => {
+    const season: Season = {
+      freeDates: [],
+      players: [player("a", 20), player("b", 25)],
+      rounds: [round("r1", 1, [score("a", 90), score("b", 100)])],
+    };
+    const a = computeSeason(season).results[0].entries.find((e) => e.playerId === "a")!;
+    expect(a.guillotined).toBe(false);
+    expect(a.capAfter).toBe(19);
+  });
+
+  it("judges the guillotine against the round's own par", () => {
+    const season: Season = {
+      freeDates: [],
+      players: [player("a", 20), player("b", 25)],
+      rounds: [round("r1", 1, [score("a", 87), score("b", 100)], "played", 70)],
+    };
+    const a = computeSeason(season).results[0].entries.find((e) => e.playerId === "a")!;
+    expect(a.net).toBe(67); // par 70 - 3 -> triggers
+    expect(a.guillotined).toBe(true);
+    expect(a.capAfter).toBe(17); // 87 - 70
   });
 });
