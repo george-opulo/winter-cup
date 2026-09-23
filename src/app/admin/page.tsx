@@ -96,8 +96,9 @@ export default async function AdminPage({
               </span>
             </div>
             <p className="sub" style={{ marginBottom: 12 }}>
-              Gross strokes per player. Tick “out” for a no-show — they get the worst net of the
-              round (or type a net in the box to override). Leave both empty to skip a player.
+              Gross strokes per player, from cards blobbed at par + 4 per hole (pick up, write
+              it down, move on). Tick “out” for a no-show — they get the worst net of the round
+              (or type a net in the box to override). Leave both empty to skip a player.
             </p>
             <input type="hidden" name="roundId" value={selectedRound.id} />
             <div className="score-grid">

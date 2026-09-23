@@ -8,6 +8,9 @@ with an auto-scheduler, and stats.
 
 - **Medal play.** Net = gross − handicap. Lowest net wins the round, highest
   net loses it.
+- **Blob at par + 4.** Maximum score on any hole is par + 4 (7 on a par 3,
+  8 on a par 4, 9 on a par 5) — pick up, write it down, move on. Cards are
+  adjusted on the course; the app records the adjusted gross.
 - **Season standings** are cumulative net; the lowest total wins the cup.
 - **Handicaps:** the round winner is docked 1, the loser goes up 1. Ties for
   first/last mean everyone tied gets docked/bumped; if the whole field ties,
