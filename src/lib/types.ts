@@ -31,7 +31,7 @@ export interface Round {
   date: string | null;
   /** 24h tee time, e.g. "14:00" */
   teeTime: string | null;
-  /** Course par for the day; nets and the guillotine are judged against it. */
+  /** Course par for the day; the blob rule (max par + 4 per hole) uses it. */
   par: number;
   status: RoundStatus;
   scores: ScoreEntry[];
