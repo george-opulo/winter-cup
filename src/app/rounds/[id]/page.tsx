@@ -52,10 +52,7 @@ export default async function RoundDetailPage({
                   </td>
                   <td>
                     <div className="chip-stack">
-                      {e.guillotined && <span className="chip cut">✂ Cut to {e.capAfter}</span>}
-                      {e.isWinner && (
-                        <span className="chip win">{e.guillotined ? "Win" : "Win ↓1"}</span>
-                      )}
+                      {e.isWinner && <span className="chip win">Win ↓1</span>}
                       {e.isLoser && <span className="chip loss">Loss ↑1</span>}
                       {e.absent && <span className="chip absent">No show</span>}
                     </div>
@@ -69,7 +66,6 @@ export default async function RoundDetailPage({
           <p className="footnote">
             Par {round.par}. Winning margin: {result.margin} stroke
             {result.margin === 1 ? "" : "s"}. No-shows score the worst net of the round.
-            {" "}Play {"3+"} under your cap and it's cut to what you shot.
           </p>
         )}
         <p>

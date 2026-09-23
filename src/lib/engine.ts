@@ -11,18 +11,11 @@ import type { Player, Round, Season } from "./types";
  * - A player who misses a round gets a penalty net score equal to the worst
  *   net of that round (admin can override the number per case). Absentees
  *   never win or lose the round, and their handicap is untouched.
- * - The guillotine: shoot GUILLOTINE_TRIGGER or more under your cap (net vs
- *   the round's par) and your cap is cut to exactly what you played to
- *   (gross − par). The triggering round stands as scored off the old cap —
- *   winter golf pays it back — and the winner's −1 never stacks on top.
  *
  * Everything below is derived deterministically from starting handicaps plus
  * the chronological gross scores, so editing any past round ripples through
  * handicaps and totals automatically.
  */
-
-/** Strokes under your cap (relative to par) that trigger the cut-to-match. */
-export const GUILLOTINE_TRIGGER = 3;
 
 export interface ResultEntry {
   playerId: string;
@@ -32,9 +25,7 @@ export interface ResultEntry {
   absent: boolean;
   isWinner: boolean;
   isLoser: boolean;
-  /** Cap cut to match after playing 3+ under it. */
-  guillotined: boolean;
-  /** -1, 0, +1, or the (larger, negative) guillotine cut. */
+  /** -1, 0 or +1 */
   capChange: number;
   capAfter: number | null;
 }
@@ -127,27 +118,19 @@ export function computeSeason(season: Season): SeasonComputed {
 
     const entries: ResultEntry[] = [];
 
-    const par = round.par ?? 72;
     for (const { entry, net } of nets) {
       const id = entry.playerId;
       const isWinner = winners.includes(id);
       const isLoser = losers.includes(id);
-      const capUsed = caps.get(id)!;
-      const guillotined = net <= par - GUILLOTINE_TRIGGER;
-      // Guillotine: cut to what they played to (gross − par); it always
-      // outcuts the winner's −1, so the two never stack.
-      const capChange = guillotined
-        ? entry.gross! - par - capUsed
-        : (isWinner ? -1 : 0) + (isLoser ? 1 : 0);
+      const capChange = (isWinner ? -1 : 0) + (isLoser ? 1 : 0);
       entries.push({
         playerId: id,
         gross: entry.gross,
-        capUsed,
+        capUsed: caps.get(id)!,
         net,
         absent: false,
         isWinner,
         isLoser,
-        guillotined,
         capChange,
         capAfter: null, // filled in after adjustments below
       });
@@ -170,7 +153,6 @@ export function computeSeason(season: Season): SeasonComputed {
         absent: true,
         isWinner: false,
         isLoser: false,
-        guillotined: false,
         capChange: 0,
         capAfter: caps.get(entry.playerId) ?? null,
       });

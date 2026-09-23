@@ -121,8 +121,7 @@ export default async function StatsPage() {
         </table>
       </div>
       <p className="footnote">
-        ↓ docked 1 for winning · ↑ up 1 for losing · a bigger ↓ is the guillotine: play 3+ under
-        your cap and it's cut to what you shot
+        ↓ docked 1 for winning the round · ↑ up 1 for losing it
       </p>
     </>
   );

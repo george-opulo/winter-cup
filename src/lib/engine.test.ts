@@ -153,48 +153,4 @@ describe("computeSeason", () => {
     expect(standings[2].position).toBe(3);
   });
 
-  it("guillotines 3+ under cap: cut to match, round banked, no stacked -1", () => {
-    const season: Season = {
-      freeDates: [],
-      players: [player("a", 20), player("b", 25)],
-      rounds: [
-        round("r1", 1, [score("a", 89), score("b", 100)]), // a nets 69 (par-3)
-        round("r2", 2, [score("a", 89), score("b", 100)]),
-      ],
-    };
-    const { results, currentCaps } = computeSeason(season);
-    const a1 = results[0].entries.find((e) => e.playerId === "a")!;
-    expect(a1.guillotined).toBe(true);
-    expect(a1.net).toBe(69); // banked off the old cap
-    expect(a1.isWinner).toBe(true);
-    expect(a1.capAfter).toBe(17); // 89 - 72; winner's -1 does NOT stack
-    expect(results[0].entries.find((e) => e.playerId === "b")!.capAfter).toBe(26);
-    const a2 = results[1].entries.find((e) => e.playerId === "a")!;
-    expect(a2.capUsed).toBe(17); // next round plays off the new cap
-    expect(a2.net).toBe(72);
-    expect(currentCaps.get("a")).toBe(16); // ordinary win in r2 -> -1
-  });
-
-  it("2 under cap stays un-guillotined; normal winner's -1 applies", () => {
-    const season: Season = {
-      freeDates: [],
-      players: [player("a", 20), player("b", 25)],
-      rounds: [round("r1", 1, [score("a", 90), score("b", 100)])],
-    };
-    const a = computeSeason(season).results[0].entries.find((e) => e.playerId === "a")!;
-    expect(a.guillotined).toBe(false);
-    expect(a.capAfter).toBe(19);
-  });
-
-  it("judges the guillotine against the round's own par", () => {
-    const season: Season = {
-      freeDates: [],
-      players: [player("a", 20), player("b", 25)],
-      rounds: [round("r1", 1, [score("a", 87), score("b", 100)], "played", 70)],
-    };
-    const a = computeSeason(season).results[0].entries.find((e) => e.playerId === "a")!;
-    expect(a.net).toBe(67); // par 70 - 3 -> triggers
-    expect(a.guillotined).toBe(true);
-    expect(a.capAfter).toBe(17); // 87 - 70
-  });
 });

@@ -18,10 +18,6 @@ with an auto-scheduler, and stats.
 - **No-shows** score the worst net of that round (admin can override the
   number per case). They can't win or lose the round and their cap is
   untouched.
-- **The guillotine:** play 3 or more under your cap (net vs the round's par)
-  and your cap is cut to exactly what you played to (gross − par). The
-  triggering round stands as scored off the old cap — winter golf pays it
-  back — and the winner's −1 never stacks on a guillotine round.
 - **The finale** is just two normal rounds on one day — each counts toward the
   total and each has its own winner/loser cap adjustment.
 

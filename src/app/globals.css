@@ -256,11 +256,6 @@ a {
   border-style: dashed;
 }
 
-.chip.cut {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--bg);
-}
 
 .chip-stack {
   display: flex;
