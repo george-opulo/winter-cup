@@ -33,7 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Swap the wordmark for the logo <img> when it's ready */}
           <header className="masthead">
             <h1 className="wordmark">Winter Cup</h1>
-            <span className="season">7 players · Sep—Mar · 2026/27</span>
           </header>
           {children}
         </main>

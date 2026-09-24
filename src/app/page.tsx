@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LeaderboardPage() {
   const season = await getStore().loadSeason();
-  const { standings, results } = computeSeason(season);
+  const { standings } = computeSeason(season);
 
   return (
     <>
@@ -29,11 +29,6 @@ export default async function LeaderboardPage() {
           </div>
         ))}
       </div>
-      <p className="footnote" style={{ marginTop: 16 }}>
-        {results.length === 0
-          ? "No rounds played — table shows starting caps. Lowest cumulative net wins."
-          : `After round ${results.length} of ${season.rounds.length}. Lowest cumulative net wins.`}
-      </p>
     </>
   );
 }

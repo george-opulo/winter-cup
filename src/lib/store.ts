@@ -38,7 +38,7 @@ const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
   { name: "George Goddard", cap: 18 },
   { name: "George Swainson", cap: 19 },
   { name: "Pete Andrews", cap: 22 },
-  { name: "George Archer", cap: 25 },
+  { name: "George Archer", cap: 24 },
   { name: "Aled Everett", cap: 26 },
   { name: "Adam Turner", cap: 29 },
 ];

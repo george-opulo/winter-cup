@@ -104,7 +104,7 @@ export default async function RoundDetailPage({
         </div>
       )}
       <p className="footnote" style={{ marginTop: 14 }}>
-        {chooser ? `${chooser}'s round — they pick the course.` : "No one assigned to this round yet."}
+        {chooser ? `${chooser}'s round.` : "No one assigned to this round yet."}
         {round.date && freeOnDate.length > 0 && (
           <> Free that day: {freeOnDate.join(" · ")}.</>
         )}
