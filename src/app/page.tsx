@@ -3,6 +3,11 @@ import { getStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
+function fmtToPar(n: number): string {
+  if (n === 0) return "E";
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
 export default async function LeaderboardPage() {
   const season = await getStore().loadSeason();
   const { standings } = computeSeason(season);
@@ -23,8 +28,10 @@ export default async function LeaderboardPage() {
               </div>
             </div>
             <div className="total">
-              {s.played + s.absences === 0 ? "—" : s.total}
-              <span className="unit">net</span>
+              {s.played + s.absences === 0 ? "—" : fmtToPar(s.toPar)}
+              <span className="unit">
+                {s.played + s.absences === 0 ? "to par" : `${s.total} net`}
+              </span>
             </div>
           </div>
         ))}

@@ -44,6 +44,8 @@ export interface Standing {
   player: Player;
   /** Cumulative net including penalty scores. */
   total: number;
+  /** Cumulative net relative to the pars of the rounds counted (the table shows this). */
+  toPar: number;
   played: number;
   absences: number;
   wins: number;
@@ -71,6 +73,7 @@ export interface SeasonComputed {
 
 interface Tally {
   total: number;
+  parSum: number;
   played: number;
   absences: number;
   wins: number;
@@ -88,7 +91,7 @@ export function computeSeason(season: Season): SeasonComputed {
   const tally = (id: string): Tally => {
     let t = tallies.get(id);
     if (!t) {
-      t = { total: 0, played: 0, absences: 0, wins: 0, losses: 0, bestNet: null };
+      t = { total: 0, parSum: 0, played: 0, absences: 0, wins: 0, losses: 0, bestNet: null };
       tallies.set(id, t);
     }
     return t;
@@ -105,6 +108,7 @@ export function computeSeason(season: Season): SeasonComputed {
       (s) => !s.absent && s.gross != null && caps.has(s.playerId)
     );
     if (participants.length === 0) continue;
+    const par = round.par ?? 72;
 
     const nets = participants.map((s) => ({
       entry: s,
@@ -136,6 +140,7 @@ export function computeSeason(season: Season): SeasonComputed {
       });
       const t = tally(id);
       t.total += net;
+      t.parSum += par;
       t.played += 1;
       if (isWinner) t.wins += 1;
       if (isLoser) t.losses += 1;
@@ -158,6 +163,7 @@ export function computeSeason(season: Season): SeasonComputed {
       });
       const t = tally(entry.playerId);
       t.total += net;
+      t.parSum += par;
       t.absences += 1;
     }
 
@@ -187,6 +193,7 @@ export function computeSeason(season: Season): SeasonComputed {
     .map((p) => {
       const t = tallies.get(p.id) ?? {
         total: 0,
+        parSum: 0,
         played: 0,
         absences: 0,
         wins: 0,
@@ -196,6 +203,7 @@ export function computeSeason(season: Season): SeasonComputed {
       return {
         player: p,
         total: t.total,
+        toPar: t.total - t.parSum,
         played: t.played,
         absences: t.absences,
         wins: t.wins,
@@ -208,13 +216,13 @@ export function computeSeason(season: Season): SeasonComputed {
 
   const ranked = standings.filter((s) => s.played + s.absences > 0);
   const unranked = standings.filter((s) => s.played + s.absences === 0);
-  ranked.sort((a, b) => a.total - b.total);
+  ranked.sort((a, b) => a.toPar - b.toPar);
   unranked.sort((a, b) => (a.currentCap ?? Infinity) - (b.currentCap ?? Infinity));
   let pos = 0;
-  let prevTotal: number | null = null;
+  let prevToPar: number | null = null;
   ranked.forEach((s, i) => {
-    if (prevTotal === null || s.total !== prevTotal) pos = i + 1;
-    prevTotal = s.total;
+    if (prevToPar === null || s.toPar !== prevToPar) pos = i + 1;
+    prevToPar = s.toPar;
     s.position = pos;
   });
 

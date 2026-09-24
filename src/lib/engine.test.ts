@@ -51,6 +51,7 @@ describe("computeSeason", () => {
     expect(currentCaps.get("c")).toBe(15);
     expect(standings[0].player.id).toBe("a");
     expect(standings[0].total).toBe(75);
+    expect(standings[0].toPar).toBe(3); // 75 net vs par 72
     expect(standings[0].position).toBe(1);
   });
 
