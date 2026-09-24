@@ -29,9 +29,6 @@ export default async function LeaderboardPage() {
             </div>
             <div className="total">
               {s.played + s.absences === 0 ? "—" : fmtToPar(s.toPar)}
-              <span className="unit">
-                {s.played + s.absences === 0 ? "to par" : `${s.total} net`}
-              </span>
             </div>
           </div>
         ))}
