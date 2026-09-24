@@ -18,8 +18,9 @@ with an auto-scheduler, and stats.
 - **No-shows** score the worst net of that round (admin can override the
   number per case). They can't win or lose the round and their cap is
   untouched.
-- **The finale** is just two normal rounds on one day — each counts toward the
-  total and each has its own winner/loser cap adjustment.
+- **The finale** is currently a single normal round. If the big day ends up
+  being 36 holes, add a second round in Admin — each round counts toward the
+  total with its own winner/loser cap adjustment.
 
 Handicaps and totals are always **recomputed from starting caps + the full
 history of gross scores**, so editing any past round automatically ripples

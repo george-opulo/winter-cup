@@ -44,8 +44,7 @@ const SEED_PLAYERS: Array<{ name: string; cap: number | null }> = [
 ];
 
 /** Round assignments were drawn once at season start: Adam first (his pick
- *  already booked), George Archer after Christmas, the rest at random. The
- *  finale is one day, so both its rounds share a chooser. */
+ *  already booked), George Archer after Christmas, the rest at random. */
 const SEED_ROUNDS: Array<{
   label: string;
   course?: string;
@@ -65,8 +64,7 @@ const SEED_ROUNDS: Array<{
   { label: "Round 4", chooserName: "Aled Everett" },
   { label: "Round 5", chooserName: "Ollie Ballard" },
   { label: "Round 6", chooserName: "George Archer" },
-  { label: "Finale — Round 1", chooserName: "Pete Andrews" },
-  { label: "Finale — Round 2", chooserName: "Pete Andrews" },
+  { label: "Finale", chooserName: "Pete Andrews" },
 ];
 
 /* ------------------------------- Postgres ------------------------------- */

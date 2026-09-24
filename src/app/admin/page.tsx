@@ -47,7 +47,12 @@ export default async function AdminPage({
       .filter((r) => !finaleRounds.includes(r))
       .map((r) => ({ label: r.label, roundIds: [r.id] })),
     ...(finaleRounds.length > 0
-      ? [{ label: "Finale (both rounds)", roundIds: finaleRounds.map((r) => r.id) }]
+      ? [
+          {
+            label: finaleRounds.length === 1 ? finaleRounds[0].label : "Finale (both rounds)",
+            roundIds: finaleRounds.map((r) => r.id),
+          },
+        ]
       : []),
   ];
   const activeIds = new Set(activePlayers.map((p) => p.id));
