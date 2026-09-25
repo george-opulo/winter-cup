@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { cutLines } from "@/lib/commentary";
 import { computeSeason } from "@/lib/engine";
 import { formatWhen } from "@/lib/format";
 import { OG_COLORS as C, fmtToPar, loadGoogleFont } from "@/lib/og";
@@ -8,13 +9,13 @@ export const dynamic = "force-dynamic";
 
 const chipStyle = (color: string, filled = false) => ({
   display: "flex",
-  fontSize: 20,
+  fontSize: 14,
   fontWeight: 700,
   textTransform: "uppercase" as const,
   letterSpacing: 2,
-  padding: "6px 14px",
+  padding: "5px 12px",
   borderRadius: 999,
-  border: `2px solid ${filled ? color : color}`,
+  border: `1.5px solid ${color}`,
   backgroundColor: filled ? color : "transparent",
   color: filled ? "#fff" : color,
 });
@@ -36,6 +37,7 @@ export async function GET(
   const sub = [round.label, formatWhen(round.date, round.teeTime), round.course]
     .filter(Boolean)
     .join("  ·  ");
+  const commentary = cutLines(result, standings, names);
 
   const played = result.entries.filter((e) => !e.absent);
   const posOf = (net: number) => 1 + played.filter((p) => p.net < net).length;
@@ -56,7 +58,7 @@ export async function GET(
           flexDirection: "column",
           backgroundColor: C.bg,
           color: C.text,
-          padding: "52px 60px",
+          padding: "72px 76px 60px",
           fontFamily: "Mono",
         }}
       >
@@ -65,17 +67,17 @@ export async function GET(
           style={{
             display: "flex",
             flexDirection: "column",
-            borderBottom: `2px solid ${C.line}`,
-            paddingBottom: 22,
+            borderBottom: `1px solid ${C.line}`,
+            paddingBottom: 30,
           }}
         >
           <div
             style={{
               fontFamily: "Archivo",
-              fontSize: 84,
+              fontSize: 58,
               fontWeight: 800,
               textTransform: "uppercase",
-              lineHeight: 0.95,
+              lineHeight: 1,
             }}
           >
             Winter Cup
@@ -83,11 +85,11 @@ export async function GET(
           <div
             style={{
               display: "flex",
-              fontSize: 23,
+              fontSize: 16,
               textTransform: "uppercase",
-              letterSpacing: 4,
+              letterSpacing: 5,
               color: C.dim,
-              marginTop: 12,
+              marginTop: 16,
             }}
           >
             {sub}
@@ -95,7 +97,7 @@ export async function GET(
         </div>
 
         {/* Round result */}
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 26 }}>
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 36 }}>
           {result.entries.map((e) => {
             const inv = e.isWinner;
             return (
@@ -105,8 +107,8 @@ export async function GET(
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "13px 20px",
-                  borderRadius: inv ? 14 : 0,
+                  padding: "17px 22px",
+                  borderRadius: inv ? 12 : 0,
                   backgroundColor: inv ? C.text : "transparent",
                   color: inv ? C.bg : C.text,
                   borderBottom: inv ? "none" : `1px solid ${C.line}`,
@@ -116,10 +118,10 @@ export async function GET(
                   <div
                     style={{
                       display: "flex",
-                      fontSize: 24,
+                      fontSize: 15,
                       fontWeight: 700,
                       color: inv ? C.pop : C.dim,
-                      width: 52,
+                      width: 40,
                     }}
                   >
                     {e.absent ? "—" : String(posOf(e.net)).padStart(2, "0")}
@@ -128,7 +130,7 @@ export async function GET(
                     style={{
                       display: "flex",
                       fontFamily: "Archivo",
-                      fontSize: 36,
+                      fontSize: 24,
                       fontWeight: 800,
                       textTransform: "uppercase",
                     }}
@@ -139,11 +141,11 @@ export async function GET(
                   {e.isLoser && <div style={chipStyle(C.loss)}>Loss ↑1</div>}
                   {e.absent && <div style={chipStyle(C.dim)}>No show</div>}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
                   <div
                     style={{
                       display: "flex",
-                      fontSize: 22,
+                      fontSize: 15,
                       color: inv ? C.inverseDim : C.dim,
                     }}
                   >
@@ -153,9 +155,9 @@ export async function GET(
                     style={{
                       display: "flex",
                       fontFamily: "Archivo",
-                      fontSize: 46,
+                      fontSize: 27,
                       fontWeight: 800,
-                      width: 92,
+                      width: 58,
                       justifyContent: "flex-end",
                     }}
                   >
@@ -167,92 +169,136 @@ export async function GET(
           })}
         </div>
 
-        {/* Season table */}
-        <div
-          style={{
-            display: "flex",
-            fontSize: 22,
-            textTransform: "uppercase",
-            letterSpacing: 5,
-            color: C.dim,
-            marginTop: 30,
-            marginBottom: 8,
-          }}
-        >
-          Season
-        </div>
+        {/* The Cut Line */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            backgroundColor: C.card,
-            border: `1px solid ${C.line}`,
-            borderRadius: 14,
-            padding: "8px 24px",
+            marginTop: 40,
+            borderLeft: `3px solid ${C.pop}`,
+            paddingLeft: 24,
+            gap: 10,
           }}
         >
-          {standings.map((s, i) => (
+          <div
+            style={{
+              display: "flex",
+              fontSize: 14,
+              textTransform: "uppercase",
+              letterSpacing: 6,
+              color: C.dim,
+            }}
+          >
+            The Cut Line
+          </div>
+          {commentary.map((line, i) => (
             <div
-              key={s.player.id}
+              key={i}
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 0",
-                borderBottom:
-                  i === standings.length - 1 ? "none" : `1px solid ${C.line}`,
+                fontSize: 17,
+                fontWeight: 700,
+                letterSpacing: 2,
+                color: i === 0 ? C.pop : C.text,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    fontSize: 22,
-                    color: s.position === 1 ? C.pop : C.dim,
-                    width: 46,
-                  }}
-                >
-                  {s.position === 0 ? "—" : String(s.position).padStart(2, "0")}
+              {line}
+            </div>
+          ))}
+        </div>
+
+        {/* Season table */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            marginTop: 40,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              fontSize: 14,
+              textTransform: "uppercase",
+              letterSpacing: 6,
+              color: C.dim,
+              marginBottom: 12,
+            }}
+          >
+            Season
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor: C.card,
+              border: `1px solid ${C.line}`,
+              borderRadius: 12,
+              padding: "6px 26px",
+            }}
+          >
+            {standings.map((s, i) => (
+              <div
+                key={s.player.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "12px 0",
+                  borderBottom:
+                    i === standings.length - 1 ? "none" : `1px solid ${C.line}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      fontSize: 14,
+                      color: s.position === 1 ? C.pop : C.dim,
+                      width: 38,
+                    }}
+                  >
+                    {s.position === 0 ? "—" : String(s.position).padStart(2, "0")}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      fontFamily: "Archivo",
+                      fontSize: 19,
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {s.player.name}
+                  </div>
                 </div>
                 <div
                   style={{
                     display: "flex",
                     fontFamily: "Archivo",
-                    fontSize: 28,
+                    fontSize: 21,
                     fontWeight: 800,
-                    textTransform: "uppercase",
                   }}
                 >
-                  {s.player.name}
+                  {s.played + s.absences === 0 ? "—" : fmtToPar(s.toPar)}
                 </div>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  fontFamily: "Archivo",
-                  fontSize: 32,
-                  fontWeight: 800,
-                }}
-              >
-                {s.played + s.absences === 0 ? "—" : fmtToPar(s.toPar)}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             marginTop: "auto",
-            paddingTop: 24,
-            fontSize: 20,
+            paddingTop: 26,
+            fontSize: 13,
             textTransform: "uppercase",
             letterSpacing: 4,
             color: C.dim,
           }}
         >
-          <div style={{ display: "flex" }}>Lowest cumulative net wins</div>
           <div style={{ display: "flex" }}>2026/27</div>
         </div>
       </div>

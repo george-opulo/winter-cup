@@ -27,9 +27,9 @@ export default async function Image() {
           display: "flex",
           backgroundColor: C.bg,
           color: C.text,
-          padding: "56px 64px",
+          padding: "72px 80px",
           fontFamily: "Mono",
-          gap: 56,
+          gap: 72,
         }}
       >
         {/* Left: wordmark */}
@@ -38,7 +38,7 @@ export default async function Image() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            width: 420,
+            width: 340,
           }}
         >
           <div
@@ -46,10 +46,10 @@ export default async function Image() {
               display: "flex",
               flexDirection: "column",
               fontFamily: "Archivo",
-              fontSize: 110,
+              fontSize: 74,
               fontWeight: 800,
               textTransform: "uppercase",
-              lineHeight: 0.9,
+              lineHeight: 0.95,
             }}
           >
             <div style={{ display: "flex" }}>Winter</div>
@@ -59,11 +59,11 @@ export default async function Image() {
             style={{
               display: "flex",
               flexDirection: "column",
-              fontSize: 22,
+              fontSize: 15,
               textTransform: "uppercase",
               letterSpacing: 4,
               color: C.dim,
-              gap: 8,
+              gap: 10,
             }}
           >
             <div style={{ display: "flex" }}>Live standings</div>
@@ -93,7 +93,7 @@ export default async function Image() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "17px 22px",
+                  padding: "16px 24px",
                   borderRadius: inv ? 14 : 0,
                   backgroundColor: inv ? C.text : "transparent",
                   color: inv ? C.bg : C.text,
@@ -105,9 +105,9 @@ export default async function Image() {
                   <div
                     style={{
                       display: "flex",
-                      fontSize: 24,
+                      fontSize: 15,
                       color: inv ? C.pop : C.dim,
-                      width: 52,
+                      width: 42,
                     }}
                   >
                     {s.position === 0 ? "—" : String(s.position).padStart(2, "0")}
@@ -116,7 +116,7 @@ export default async function Image() {
                     style={{
                       display: "flex",
                       fontFamily: "Archivo",
-                      fontSize: 38,
+                      fontSize: 25,
                       fontWeight: 800,
                       textTransform: "uppercase",
                     }}
@@ -128,7 +128,7 @@ export default async function Image() {
                   style={{
                     display: "flex",
                     fontFamily: "Archivo",
-                    fontSize: 48,
+                    fontSize: 28,
                     fontWeight: 800,
                   }}
                 >
