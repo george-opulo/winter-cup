@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { computeSeason } from "@/lib/engine";
 import { formatWhen } from "@/lib/format";
 import { getStore } from "@/lib/store";
+import { ShareCard } from "./ShareCard";
 
 export const dynamic = "force-dynamic";
 
@@ -68,11 +69,12 @@ export default async function RoundDetailPage({
             {result.margin === 1 ? "" : "s"}. No-shows score the worst net of the round.
           </p>
         )}
-        <p>
+        <div className="inline-actions">
+          <ShareCard roundId={round.id} label={round.label} />
           <Link href="/rounds" className="btn secondary small">
             ← All rounds
           </Link>
-        </p>
+        </div>
       </>
     );
   }
