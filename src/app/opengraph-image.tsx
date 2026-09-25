@@ -11,7 +11,7 @@ export const contentType = "image/png";
 export default async function Image() {
   const season = await getStore().loadSeason();
   const { standings, results } = computeSeason(season);
-  const top = standings.slice(0, 5);
+  const top = standings;
 
   const [archivo, mono] = await Promise.all([
     loadGoogleFont("Archivo", 800),
@@ -93,7 +93,7 @@ export default async function Image() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "16px 24px",
+                  padding: "11px 22px",
                   borderRadius: inv ? 14 : 0,
                   backgroundColor: inv ? C.text : "transparent",
                   color: inv ? C.bg : C.text,
@@ -116,7 +116,7 @@ export default async function Image() {
                     style={{
                       display: "flex",
                       fontFamily: "Archivo",
-                      fontSize: 25,
+                      fontSize: 22,
                       fontWeight: 800,
                       textTransform: "uppercase",
                     }}
@@ -128,7 +128,7 @@ export default async function Image() {
                   style={{
                     display: "flex",
                     fontFamily: "Archivo",
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: 800,
                   }}
                 >
